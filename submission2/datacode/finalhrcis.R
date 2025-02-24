@@ -33,7 +33,7 @@ final.hcris =
 
 ## identify hospitals with only one report per fiscal year 
 ## this will be the first set of hospitals in the final dataset
-indiv.hcris1 =
+unique.hcris1 =
   final.hcris %>%
   filter(total_reports==1) %>%
   select(-report, -total_reports, -report_number, -npi, -status) %>%
@@ -54,7 +54,7 @@ duplicate.hcris =
 
 ## if the elapsed time within a fy sums to around 365, then just take the total of the two
 ## this will be the second set of hospitals in the final dataset
-indiv.hcris2 = 
+unique.hcris2 = 
   duplicate.hcris %>%
   filter(total_days<370) %>%
   group_by(provider_number, fyear) %>%
@@ -80,7 +80,7 @@ duplicate.hcris2 =
 
 ## identify hospitals with one report (out of multiple) that appears to cover the full year
 ## this will be the third set of hospitals in the final dataset
-indiv.hcris3 = 
+unique.hcris3 = 
   duplicate.hcris2 %>%
   filter(max_days==time_diff, time_diff>360, max_date==fy_end) %>%
   select(-report, -total_reports, -report_number, -npi, -status, -max_days, -time_diff, -total_days, -max_date) %>%
@@ -99,7 +99,7 @@ duplicate.hcris3 =
               "hvbp_payment", "hrrp_payment"),list(~ .*(time_diff/total_days)))
 
 ## form weighted average of values for each fiscal year
-indiv.hcris4 = 
+unique.hcris4 = 
   duplicate.hcris3 %>%
   group_by(provider_number, fyear) %>%
   mutate(hrrp_payment=if_else(is.na(hrrp_payment),0,hrrp_payment),
@@ -117,7 +117,7 @@ indiv.hcris4 =
   mutate(source='weighted_average')
   
 #final hcris data save
-final.hcris.data=rbind(indiv.hcris1, indiv.hcris2, indiv.hcris3, indiv.hcris4)
+final.hcris.data=rbind(unique.hcris1, unique.hcris2, unique.hcris3, unique.hcris4)
 final.hcris.data =
   final.hcris.data %>%
   rename(year=fyear) %>%
